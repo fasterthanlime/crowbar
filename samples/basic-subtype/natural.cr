@@ -3,11 +3,11 @@ Nat: cover from Int {
   rule this >= 0
 }
 
-sqrt: func (a: Nat) {
-  sqrt2(a)
+fac: func (a: Nat) {
+  fac2(a)
 }
 
-sqrt2: func (a: Nat) {
+fac2: func (a: Nat) {
 
 }
 

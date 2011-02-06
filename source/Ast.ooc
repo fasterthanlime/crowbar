@@ -10,13 +10,18 @@ intType  := Type new("Int")
 
 Type: class {
   name: String
-  arguments := ArrayList<Type> new()
+  args := ArrayList<Type> new()
 
   init: func (=name) {}
+  
+  toString: func -> String {
+    // todo: args
+    name
+  }
 }
 
 Stat: abstract class {
-  
+  toString: abstract func -> String
 }
 
 Expr: abstract class extends Stat {
@@ -26,8 +31,23 @@ Expr: abstract class extends Stat {
    * or at least enforce checking
    */
   getType: abstract func -> Option<Type>
+}
+
+Call: class extends Expr {
+  expr := Option<Expr> new() // (ie. None by default)
+  name: String
+  args := ArrayList<Expr> new()
   
-  toString: abstract func -> String
+  init: func (=name) {}
+  
+  getType: func -> Option<Type> {
+    // TODO: resolve, returning None for now
+    Option<Type> new()
+  }
+  
+  toString: func -> String {
+    name + "(" + args map(|x| x toString()) join(", ") + ")"
+  }
 }
 
 Name: class extends Expr {
@@ -110,34 +130,55 @@ Var: class {
   name: String
   
   init: func (=name) {}
+  
+  toString: func -> String {
+    "var %s" format(name)
+  }
 }
 
 TypedVar: class extends Var {
   type: Type
   
   init: func (=name, =type) {}
+  
+  toString: func {
+    "var %s: %s" format(name, type toString())
+  }
 }
 
 Body: class {
   rules := ArrayList<Rule> new()
   stats := ArrayList<Stat> new()
+  
+  toString: func -> String {
+    // TODO: rules
+    "{\n" + stats map(|stat| "  " + stat toString()) join("\n") + "\n}\n"
+  }
 }
 
 FuncDecl: class {
-  arguments := ArrayList<Var> new()
+  name: String
+  args := ArrayList<Var> new()
   retType := voidType
   body := Body new()
+  
+  init: func(=name) {}
+  
+  toString: func -> String {
+    name + ": func (" + args map(|x| x toString()) join(", ") + \
+      ") -> " + retType toString() + " " + body toString()
+  }
 }
 
 TypeDecl: class {
   name: String
-  arguments := ArrayList<String> new()
+  args := ArrayList<String> new()
   
   init: func(=name) {}
   
   toString: func -> String {
     "type %s" format(name)
-    // TODO: arguments (ie. generics)
+    // TODO: args (ie. generics)
   }
 }
 
@@ -152,7 +193,7 @@ CoverDecl: class extends TypeDecl {
   toString: func -> String {
     b := Buffer new()
     b append(super())
-    b append(" cover from %s {\n\n   // rules:\n" format(under))
+    b append(" cover from %s {\n   // rules:\n" format(under))
     rules each(|rule| b append("   "). append(rule toString()). append("\n"))
     b append("}\n\n")
     b toString()
@@ -171,10 +212,14 @@ Module: class {
   toString: func -> String {
     b := Buffer new()
     b append("// Module %s\n\n" format(name))
+    
     b append("// Types:\n")
     types each(|type| b append(type toString()). append("\n"))
     
-    // TODO: FuncDecls and Rules
+    b append("// Funcs:\n")
+    funcs each(|fun| b append(fun toString()). append("\n"))
+    
+    // TODO: Rules
     b toString()
   }
 }
